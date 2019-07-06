@@ -7,10 +7,13 @@ will mostly only suit my needs, but if you have an idea on how to improve the
 parser and/or features, feel free to create an issue for it!
 
 # Features and syntax
+- Paragraphs, separated by an empty line
 - Titles, using the markdown `#, ##, …` syntax for the different levels
-- Inline code, using the markdown syntax `` `inline code` ``, with \\ to escape backticks (and only backticks)
+- Inline code, using the markdown syntax `` `inline code` ``, with \\ to escape
+  backticks (and only backticks)
 - Block of code, using something close to the markdown syntax, allowing to add
-  numbers to the lines:
+  numbers to the lines. Note that those have to be on an independant paragraph
+  (surounded by empty lines).
 ````
 ```language:starting_line
 code
