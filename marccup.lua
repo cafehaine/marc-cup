@@ -6,6 +6,11 @@ local function strip(str)
 	return str:match('^%s*(.-)%s*$')
 end
 
+local function merge_spaces(str)
+	local output, count = str:gsub("%s+"," ")
+	return output
+end
+
 local function parse_title(iter)
 	local output = {type="title"}
 	local level = 0
@@ -21,7 +26,7 @@ local function parse_title(iter)
 		char = iter:next()
 	end
 	-- strip out spaces
-	output.body = strip(body)
+	output.body = merge_spaces(strip(body))
 	return output
 end
 
@@ -75,7 +80,7 @@ local function parse_link(iter)
 	if char == nil then
 		error("EOF while parsing link url")
 	end
-	output.description = strip(description)
+	output.description = merge_spaces(description)
 	output.url = strip(url)
 	return output
 end
@@ -91,17 +96,17 @@ local function parse_paragraph(iter)
 		local char = iter:next()
 		-- parse inline code
 		if char == '`' then
-			data[#data+1] = text
+			data[#data+1] = merge_spaces(text)
 			data[#data+1] = parse_inline_code(iter)
 			text = ""
 		-- parse link
 		elseif char == '[' then
-			data[#data+1] = text
+			data[#data+1] = merge_spaces(text)
 			data[#data+1] = parse_link(iter)
 			text = ""
 		-- go up one level of emphasis
 		elseif char == '{' then
-			data[#data+1] = text
+			data[#data+1] = merge_spaces(text)
 			data_stack[data_index] = data
 			data_index = data_index + 1
 			local parent_data = data
@@ -110,7 +115,7 @@ local function parse_paragraph(iter)
 			text = ""
 		-- go down one level of emphasis
 		elseif char == '}' then
-			data[#data+1] = text
+			data[#data+1] = merge_spaces(text)
 			data_index = data_index - 1
 			if data_index == 0 then
 				error("Too many closing brackets for this paragraph.")
@@ -125,7 +130,7 @@ local function parse_paragraph(iter)
 	if data_index ~= 1 then
 		error("Not enough closing brackets for this paragraph.")
 	end
-	data[#data+1] = text
+	data[#data+1] = merge_spaces(text)
 	return output
 end
 
@@ -159,6 +164,37 @@ function m.to_tree(data)
 	end
 	-- compress spaces
 	return compress_spaces(output)
+end
+
+local function text_node_to_text(node)
+	local output = {}
+	for _,elm in ipairs(node) do
+		if type(elm) == "string" then
+			output[#output+1] = elm
+		else
+			if elm.type == "inline_code" then
+				output[#output+1] = elm.body
+			elseif elm.type == "link" then
+				output[#output+1] = elm.description
+			-- emphasis
+			else
+				output[#output+1] = text_node_to_text(elm)
+			end
+		end
+	end
+	return table.concat(output)
+end
+
+function m.only_text(tree)
+	local output = {}
+	for _,node in ipairs(tree) do
+		if node.type == "text" then
+			output[#output+1] = text_node_to_text(node.data)
+		else
+			output[#output+1] = node.body
+		end
+	end
+	return table.concat(output, " ")
 end
 
 return m
