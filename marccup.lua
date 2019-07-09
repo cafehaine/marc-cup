@@ -30,9 +30,36 @@ local function parse_title(iter)
 	return output
 end
 
+local function next_line(iter)
+	local output = {}
+	char = iter:next()
+	while char ~= "\n" do
+		output[#output+1] = char
+		char = iter:next()
+	end
+	return table.concat(output)
+end
+
 local function parse_code_block(iter)
 	local output = {type="code"}
-	error("NOT IMPLEMENTED")
+	local body = {}
+	local meta = next_line(iter):match("^```(.*)$")
+	local lang, start = meta:match("^%s*(.+):(%d+)%s*$")
+	if not lang then
+		lang = meta:match("^%s(.+)%s*$")
+		output.lang = lang -- might be nil
+		output.start = 1
+	else
+		output.lang = lang
+		output.start = tonumber(start)
+	end
+	local line = next_line(iter)
+	while not line:match("```\r?") do
+		body[#body+1] = line
+		line = next_line(iter)
+	end
+	output.body = table.concat(body, "\n")
+	return output
 end
 
 local function parse_inline_code(iter)
