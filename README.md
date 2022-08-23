@@ -1,3 +1,7 @@
+# Unmaintained project!
+
+I might take another stab at this, but at the moment I no longer plan on developing this.
+
 # Marc-Cup
 ## What is Marc-Cup
 Marc-Cup is a lua parser for a simple custom markup language.
